@@ -1,0 +1,13 @@
+'use strict';
+const el=id=>document.getElementById(id);
+let state='pending',content=false, stopped=false;
+function log(text){const p=document.createElement('p');p.textContent=text;el('panel-log').append(p);}
+function render(){el('pending-count').textContent=state==='pending'?'1':'0';el('approved-count').textContent=state==='confirmed'?'1':'0';el('content-count').textContent=content?'1':'0';el('approve').disabled=state==='confirmed'||state==='cancelled';el('cancel').disabled=state==='cancelled';el('retry').hidden=state!=='error';}
+function approve(){if(state==='confirmed'||state==='cancelled')return;const scenario=el('panel-scenario').value;if(scenario==='conflict'){state='pending';el('booking-status').textContent='Çakışma: alternatif plan bekleniyor';log('Çakışma yakalandı. Onay ve takvim taslağı engellendi.');}else if(scenario==='error'){state='error';el('booking-status').textContent='Hata: onay tamamlanmadı';log('Hata örneği: güvenli yeniden deneme bekleniyor.');}else{state='confirmed';el('booking-status').textContent='Demo onayı verildi · canlı takvim kaydı yok';log('Demo onayı işlendi. Yinelenen onay düğmesi kapatıldı.');}render();}
+el('approve').addEventListener('click',approve);el('retry').addEventListener('click',approve);
+el('cancel').addEventListener('click',()=>{if(state==='cancelled')return;state='cancelled';el('booking-status').textContent='Demo iptal edildi · hatırlatmalar durduruldu';log('İptal örneği işlendi. Hatırlatma taslağı hazırlanmaz.');render();});
+el('reschedule').addEventListener('click',()=>{state='pending';el('booking-status').textContent='Yeni gün için tekrar salon onayı bekleniyor';log('Yeniden planlama: eski onay geçersiz, yeni onay gerekli.');render();});
+el('content-approve').addEventListener('click',()=>{if(content)return;content=true;el('content-status').textContent='Demo taslak onaylandı. Yayın yapılmadı.';el('content-approve').disabled=true;log('İçerik yalnızca demo kuyruğunda onaylandı.');render();});
+el('stop-messages').addEventListener('change',e=>{stopped=e.target.checked;el('consent-status').textContent=stopped?'İzin geri çekildi: örnek hatırlatma ve yorum daveti engellendi.':'İzinler gerçek sistemde ayrıca doğrulanmalıdır.';log(stopped?'İletişimi durdurma örneği uygulandı.':'Örnek durdurma kaldırıldı; gerçek izin verilmiş sayılmaz.');});
+el('report').addEventListener('click',()=>{el('report-output').textContent=`Bu demo oturumu: ${state==='pending'?1:0} bekleyen, ${state==='confirmed'?1:0} onaylı, ${state==='cancelled'?1:0} iptal talebi; ${content?1:0} onaylı içerik. Dış mesaj: 0. İletişim durdurma örneği: ${stopped?'açık':'kapalı'}.`;log('Örnek rapor sayfa belleğinden oluşturuldu.');});
+el('panel-reset').addEventListener('click',()=>location.reload());
